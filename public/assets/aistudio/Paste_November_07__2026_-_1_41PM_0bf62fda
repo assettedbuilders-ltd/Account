@@ -1,0 +1,1737 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      Assetted Builders Ltd. - Customer Payment Management & Statement Generator
+    </title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <!-- Google Fonts (Inter) -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- External Libraries for Excel and File Export -->
+    <!-- SheetJS for Excel (.xlsx) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- FileSaver.js for saving files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              navy: {
+                800: "#1e293b",
+                900: "#0f172a",
+                950: "#020617",
+              },
+              gold: {
+                400: "#fbbf24",
+                500: "#f59e0b",
+                600: "#d97706",
+              },
+            },
+            fontFamily: {
+              sans: ["Inter", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+              body {
+                  font-family: 'Inter', sans-serif;
+                  background-color: #f8fafc;
+              }
+              @media print {
+
+      <style>
+        body {
+          font-family: "Inter", sans-serif;
+          background-color: #f8fafc;
+        }
+
+        .print-only {
+          display: none;
+        }
+
+        @media print {
+          @page {
+            size: A4;
+            margin: 10mm;
+          }
+
+          html,
+          body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+          }
+
+          body {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+
+          body * {
+            visibility: hidden;
+          }
+
+          #printableArea,
+          #printableArea * {
+            visibility: visible;
+          }
+
+          #printableArea {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            padding: 0 !important;
+            margin: 0 !important;
+            overflow: visible !important;
+            background: #ffffff !important;
+          }
+
+          .no-print,
+          #printModal .no-print,
+          #paymentModal,
+          #toast {
+            display: none !important;
+          }
+
+          .print-only {
+            display: block !important;
+          }
+
+          .print-card {
+            box-shadow: none !important;
+            border: none !important;
+          }
+        }
+    </style>
+  </head>
+  <body
+    class="text-slate-800 antialiased min-h-screen flex flex-col justify-between"
+  >
+    <!-- Toast Notification Box -->
+    <div
+      id="toast"
+      class="fixed top-5 right-5 z-50 transform translate-y-[-150%] transition-transform duration-300 ease-in-out bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center space-x-3 border-l-4 border-gold-500"
+    >
+      <i
+        id="toast-icon"
+        class="fa-solid fa-circle-check text-gold-500 text-lg"
+      ></i>
+      <span id="toast-msg" class="font-medium text-sm"
+        >Action completed successfully!</span
+      >
+    </div>
+
+    <!-- MAIN APP WRAPPER -->
+    <div class="no-print flex-1">
+      <!-- Header & Branding Bar -->
+      <header
+        class="bg-navy-900 text-white border-b-4 border-gold-500 sticky top-0 z-30 shadow-md"
+      >
+        <div
+          class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap justify-between items-center gap-4"
+        >
+          <div class="flex items-center space-x-3">
+            <!-- Custom SVG Logo Matching Assetted Builders AB Brand Image -->
+            <div
+              class="bg-navy-950 p-2 rounded-xl border border-gold-500/30 shadow-md flex items-center justify-center w-12 h-12"
+            >
+              <svg
+                class="w-9 h-9"
+                viewBox="0 0 200 200"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <!-- Blue Peak A Left -->
+                <path d="M30 160 L95 30 L120 75 L60 160 Z" fill="#1d4ed8" />
+                <!-- Gray / Slate Accent Peak -->
+                <path d="M95 30 L115 15 L120 75 Z" fill="#94a3b8" />
+                <!-- Dark Blue Peak Center -->
+                <path d="M120 15 L145 15 L145 150 L120 150 Z" fill="#0f172a" />
+                <!-- Window Grid -->
+                <rect x="75" y="130" width="12" height="12" fill="#1d4ed8" />
+                <rect x="90" y="130" width="12" height="12" fill="#1d4ed8" />
+                <rect x="75" y="145" width="12" height="12" fill="#1d4ed8" />
+                <rect x="90" y="145" width="12" height="12" fill="#1d4ed8" />
+                <!-- Gold B Letter Structure -->
+                <path
+                  d="M120 50 C165 50 185 70 185 90 C185 105 170 115 150 118 C175 122 190 135 190 155 C190 178 160 185 120 185 L120 150 C145 150 155 145 155 135 C155 125 140 120 120 120 L120 85 C140 85 150 80 150 72 C150 62 138 60 120 60 Z"
+                  fill="#f59e0b"
+                />
+                <!-- Gold Roof Arch -->
+                <path d="M25 160 L120 100 L120 120 L40 160 Z" fill="#fbbf24" />
+                <!-- Outer Orbital Swooshes -->
+                <path
+                  d="M15 125 C 20 180, 110 195, 150 180"
+                  stroke="#1d4ed8"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M80 195 C 140 195, 200 165, 195 100"
+                  stroke="#f59e0b"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </div>
+            <div>
+              <h1
+                class="text-xl sm:text-2xl font-extrabold tracking-tight text-white flex items-center gap-2"
+              >
+                ASSETTED BUILDERS LTD.
+                <span
+                  class="text-xs bg-gold-500/20 text-gold-400 border border-gold-500/30 px-2 py-0.5 rounded-full font-semibold"
+                  >ERP Suite</span
+                >
+              </h1>
+              <p class="text-xs text-slate-300 font-medium">
+                <i
+                  class="fa-solid fa-location-dot text-gold-400 text-[10px] mr-1"
+                ></i>
+                Notun Panir pamp Road, Block# B, Sayednagar, Vatara, Gulshan,
+                Dhaka-1212
+                <span class="mx-1 text-slate-500">|</span>
+                <i class="fa-solid fa-phone text-gold-400 text-[10px] mr-1"></i>
+                +8801706-664962, +8801717-080916
+              </p>
+            </div>
+          </div>
+
+          <!-- Customer Selection & Search Dropdown -->
+          <div class="flex items-center gap-3 w-full sm:w-auto">
+            <div class="relative flex-1 sm:w-72">
+              <select
+                id="customerSelect"
+                onchange="switchCustomer(this.value)"
+                class="w-full bg-navy-800 text-white text-sm font-medium rounded-lg border border-slate-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gold-500 focus:border-transparent cursor-pointer"
+              >
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+            <button
+              onclick="createNewCustomerPrompt()"
+              class="bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold px-3 py-2 rounded-lg text-sm transition-all duration-200 flex items-center gap-1.5 shadow-sm whitespace-nowrap"
+            >
+              <i class="fa-solid fa-user-plus"></i>
+              <span class="hidden sm:inline">New Client</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Dashboard Container -->
+      <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        <!-- Search & Filter Bar -->
+        <div
+          class="bg-white rounded-xl p-3 border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center gap-3"
+        >
+          <div class="relative flex-1 w-full">
+            <i
+              class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+            ></i>
+            <input
+              type="text"
+              id="searchInput"
+              oninput="filterCustomers()"
+              placeholder="Search by name, flat no, or Customer ID..."
+              class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-gold-500 focus:bg-white transition-all"
+            />
+          </div>
+          <div class="text-xs font-semibold text-slate-500 whitespace-nowrap">
+            Active Customer ID:
+            <span id="activeCustomerIdBadge" class="text-gold-600 font-bold"
+              >2026001</span
+            >
+          </div>
+        </div>
+
+        <!-- Summary KPI Cards Row -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Card 1: Total Flat Price -->
+          <div
+            class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between relative overflow-hidden"
+          >
+            <div class="space-y-1">
+              <p
+                class="text-xs font-semibold uppercase tracking-wider text-slate-500"
+              >
+                Total Flat Price
+              </p>
+              <h3 id="cardTotalPrice" class="text-2xl font-bold text-slate-900">
+                0 BDT
+              </h3>
+              <p
+                id="cardProjectName"
+                class="text-xs text-slate-500 font-medium truncate max-w-[200px]"
+              >
+                Project: -
+              </p>
+            </div>
+            <div class="bg-slate-100 text-slate-700 p-3.5 rounded-xl text-xl">
+              <i class="fa-solid fa-house-lock"></i>
+            </div>
+            <div
+              class="absolute bottom-0 left-0 right-0 h-1 bg-slate-300"
+            ></div>
+          </div>
+
+          <!-- Card 2: Total Paid -->
+          <div
+            class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between relative overflow-hidden"
+          >
+            <div class="space-y-1">
+              <p
+                class="text-xs font-semibold uppercase tracking-wider text-emerald-600"
+              >
+                Total Received Amount
+              </p>
+              <h3
+                id="cardTotalPaid"
+                class="text-2xl font-bold text-emerald-600"
+              >
+                0 BDT
+              </h3>
+              <p
+                id="cardPaymentCount"
+                class="text-xs text-slate-500 font-medium"
+              >
+                0 Installments Recorded
+              </p>
+            </div>
+            <div
+              class="bg-emerald-50 text-emerald-600 p-3.5 rounded-xl text-xl"
+            >
+              <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <div
+              class="absolute bottom-0 left-0 right-0 h-1 bg-emerald-500"
+            ></div>
+          </div>
+
+          <!-- Card 3: Balance Remaining -->
+          <div
+            class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between relative overflow-hidden"
+          >
+            <div class="space-y-1">
+              <p
+                class="text-xs font-semibold uppercase tracking-wider text-amber-600"
+              >
+                Outstanding Balance
+              </p>
+              <h3 id="cardBalanceDue" class="text-2xl font-bold text-amber-600">
+                0 BDT
+              </h3>
+              <div class="flex items-center gap-2">
+                <span
+                  id="cardProgressText"
+                  class="text-xs font-bold text-amber-700"
+                  >0% Paid</span
+                >
+              </div>
+            </div>
+            <div class="bg-amber-50 text-amber-600 p-3.5 rounded-xl text-xl">
+              <i class="fa-solid fa-file-invoice-dollar"></i>
+            </div>
+            <div
+              class="absolute bottom-0 left-0 right-0 h-1 bg-amber-500"
+            ></div>
+          </div>
+        </div>
+
+        <!-- Overall Progress Bar Container -->
+        <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+          <div
+            class="flex justify-between items-center mb-1 text-sm font-semibold"
+          >
+            <span class="text-slate-700">Overall Payment Completion</span>
+            <span id="progressPercentageText" class="text-gold-600">0%</span>
+          </div>
+          <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+            <div
+              id="progressBarInner"
+              class="bg-gradient-to-r from-gold-500 to-emerald-500 h-3 rounded-full transition-all duration-500"
+              style="width: 0%"
+            ></div>
+          </div>
+        </div>
+
+        <!-- 2-Column Section: Customer Info Form (Left) & Export Actions (Right) -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Left Column: Customer Details Editor Form -->
+          <div
+            class="lg:col-span-2 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4"
+          >
+            <div
+              class="flex items-center justify-between pb-3 border-b border-slate-100"
+            >
+              <h2
+                class="text-base font-bold text-navy-900 flex items-center gap-2"
+              >
+                <i class="fa-solid fa-id-card text-gold-500"></i> Customer &
+                Property Profile
+              </h2>
+              <button
+                onclick="saveCustomerInfo()"
+                class="text-xs bg-navy-900 hover:bg-slate-800 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"
+              >
+                <i class="fa-solid fa-floppy-disk"></i> Save Profile
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1"
+                  >Customer ID</label
+                >
+                <input
+                  type="text"
+                  id="custRef"
+                  onchange="saveCustomerInfo()"
+                  class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 font-bold text-gold-600 focus:bg-white focus:ring-2 focus:ring-gold-500 focus:outline-none"
+                  placeholder="e.g. 2026001"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1"
+                  >Customer Name</label
+                >
+                <input
+                  type="text"
+                  id="custName"
+                  onchange="saveCustomerInfo()"
+                  class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:bg-white focus:ring-2 focus:ring-gold-500 focus:outline-none"
+                  placeholder="e.g. Hosneara Begum"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1"
+                  >Contact Number</label
+                >
+                <input
+                  type="text"
+                  id="custContact"
+                  onchange="saveCustomerInfo()"
+                  class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:bg-white focus:ring-2 focus:ring-gold-500 focus:outline-none"
+                  placeholder="e.g. 01894-934665"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1"
+                  >Project Name</label
+                >
+                <input
+                  type="text"
+                  id="custProject"
+                  onchange="saveCustomerInfo()"
+                  class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:bg-white focus:ring-2 focus:ring-gold-500 focus:outline-none"
+                  placeholder="e.g. Assetted Master Tower"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1"
+                  >Flat / Unit No.</label
+                >
+                <input
+                  type="text"
+                  id="custFlat"
+                  onchange="saveCustomerInfo()"
+                  class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:bg-white focus:ring-2 focus:ring-gold-500 focus:outline-none"
+                  placeholder="e.g. Lift - 3A"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1"
+                  >Total Flat Price (BDT)</label
+                >
+                <input
+                  type="number"
+                  id="custTotalPrice"
+                  oninput="saveCustomerInfo()"
+                  class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 font-bold text-navy-900 focus:bg-white focus:ring-2 focus:ring-gold-500 focus:outline-none"
+                  placeholder="e.g. 6450000"
+                />
+              </div>
+              <div class="sm:col-span-2">
+                <label class="block text-xs font-semibold text-slate-600 mb-1"
+                  >Agreement Date</label
+                >
+                <input
+                  type="date"
+                  id="custAgreementDate"
+                  onchange="saveCustomerInfo()"
+                  class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:bg-white focus:ring-2 focus:ring-gold-500 focus:outline-none"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Instant Document Export Actions Engine -->
+          <div
+            class="bg-gradient-to-br from-navy-900 to-slate-900 text-white rounded-2xl p-5 sm:p-6 border border-slate-800 shadow-md flex flex-col justify-between space-y-4"
+          >
+            <div>
+              <div
+                class="flex items-center space-x-2 border-b border-slate-800 pb-3 mb-3"
+              >
+                <i class="fa-solid fa-file-export text-gold-500 text-lg"></i>
+                <h2 class="text-base font-bold text-white">
+                  Automated Export Engine
+                </h2>
+              </div>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                Generate formatted official documents directly in your browser
+                without Excel or manual file entry.
+              </p>
+            </div>
+
+            <div class="space-y-3">
+              <!-- Export Excel Button -->
+              <button
+                onclick="exportToExcel()"
+                class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 px-4 rounded-xl shadow transition-all duration-200 flex items-center justify-between text-sm group"
+              >
+                <span class="flex items-center gap-2">
+                  <i
+                    class="fa-solid fa-file-excel text-lg text-emerald-200 group-hover:scale-110 transition-transform"
+                  ></i>
+                  Export Excel Sheet (.xlsx)
+                </span>
+                <i class="fa-solid fa-download text-xs"></i>
+              </button>
+
+              <!-- Export Word Button -->
+              <button
+                onclick="exportToWord()"
+                class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 px-4 rounded-xl shadow transition-all duration-200 flex items-center justify-between text-sm group"
+              >
+                <span class="flex items-center gap-2">
+                  <i
+                    class="fa-solid fa-file-word text-lg text-blue-200 group-hover:scale-110 transition-transform"
+                  ></i>
+                  Export Word Document (.docx)
+                </span>
+                <i class="fa-solid fa-download text-xs"></i>
+              </button>
+
+              <!-- Printable PDF Preview Button -->
+              <button
+                onclick="openPrintModal()"
+                class="w-full bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold py-2.5 px-4 rounded-xl shadow transition-all duration-200 flex items-center justify-between text-sm group"
+              >
+                <span class="flex items-center gap-2">
+                  <i
+                    class="fa-solid fa-print text-lg text-navy-900 group-hover:scale-110 transition-transform"
+                  ></i>
+                  Open Print / PDF Preview
+                </span>
+                <i class="fa-solid fa-arrow-right text-xs"></i>
+              </button>
+            </div>
+
+            <div
+              class="pt-2 border-t border-slate-800 text-[11px] text-slate-400 flex justify-between items-center"
+            >
+              <span
+                ><i class="fa-solid fa-shield-halved text-gold-500"></i> Auto
+                Sync Enabled</span
+              >
+              <span>Assetted v3.3</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Records History Table Section -->
+        <div
+          class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"
+        >
+          <div
+            class="p-4 sm:p-5 border-b border-slate-100 flex flex-wrap justify-between items-center gap-3"
+          >
+            <div>
+              <h2
+                class="text-base font-bold text-navy-900 flex items-center gap-2"
+              >
+                <i class="fa-solid fa-list-check text-gold-500"></i> Customer
+                Payment Ledger History
+              </h2>
+              <p class="text-xs text-slate-500">
+                Add, edit, or track all installments received from this
+                customer.
+              </p>
+            </div>
+            <button
+              onclick="openPaymentModal()"
+              class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-2 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
+            >
+              <i class="fa-solid fa-plus"></i> Add Payment Entry
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-slate-700">
+              <thead
+                class="bg-slate-50 text-slate-600 uppercase text-[11px] font-bold tracking-wider border-b border-slate-200"
+              >
+                <tr>
+                  <th class="py-3 px-4 w-12 text-center">#</th>
+                  <th class="py-3 px-4">Payment Date</th>
+                  <th class="py-3 px-4">Money Receipt No.</th>
+                  <th class="py-3 px-4">Payment Method</th>
+                  <th class="py-3 px-4">Cheque / Ref No</th>
+                  <th class="py-3 px-4 text-right">Amount (BDT)</th>
+                  <th class="py-3 px-4 text-center w-28">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="paymentTableBody" class="divide-y divide-slate-100">
+                <!-- Dynamically Generated Payment Rows -->
+              </tbody>
+              <tfoot class="bg-slate-50 font-bold text-slate-900">
+                <tr>
+                  <td colspan="5" class="py-3 px-4 text-right">
+                    Total Amount Received:
+                  </td>
+                  <td
+                    id="tableTotalPaid"
+                    class="py-3 px-4 text-right text-emerald-600 font-extrabold text-base"
+                  >
+                    0 BDT
+                  </td>
+                  <td></td>
+                </tr>
+                <tr class="border-t border-slate-200 bg-amber-50/50">
+                  <td colspan="5" class="py-3 px-4 text-right text-amber-800">
+                    Remaining Balance Due:
+                  </td>
+                  <td
+                    id="tableBalanceDue"
+                    class="py-3 px-4 text-right text-amber-700 font-extrabold text-base"
+                  >
+                    0 BDT
+                  </td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- PRINTABLE STATEMENT MODAL PREVIEW -->
+    <div
+      id="printModal"
+      class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden overflow-y-auto"
+    >
+      <div
+        class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden"
+      >
+        <!-- Modal Header -->
+        <div
+          class="no-print p-4 bg-navy-900 text-white flex justify-between items-center border-b border-slate-800"
+        >
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-print text-gold-500"></i>
+            <h3 class="font-bold text-sm sm:text-base">
+              Official Customer Statement Preview
+            </h3>
+          </div>
+          <div class="flex items-center gap-2">
+            <button
+              onclick="printStatementDoc()"
+              class="bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold text-xs px-3 py-1.5 rounded-lg flex items-center gap-1"
+            >
+              <i class="fa-solid fa-print"></i> Print / Download PDF
+            </button>
+            <button
+              onclick="closePrintModal()"
+              class="text-slate-400 hover:text-white p-1 rounded-lg"
+            >
+              <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Printable Sheet Content Body -->
+        <div
+          id="printableArea"
+          class="p-8 sm:p-10 overflow-y-auto flex-1 bg-white text-slate-900 space-y-6"
+        >
+          <!-- Company Header -->
+          <div
+            class="flex justify-between items-start border-b-2 border-gold-500 pb-4"
+          >
+            <div class="flex items-center space-x-3">
+              <div
+                class="bg-navy-950 p-2 rounded-xl border border-gold-500/30 w-12 h-12 flex items-center justify-center"
+              >
+                <svg
+                  class="w-9 h-9"
+                  viewBox="0 0 200 200"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M30 160 L95 30 L120 75 L60 160 Z" fill="#1d4ed8" />
+                  <path d="M95 30 L115 15 L120 75 Z" fill="#94a3b8" />
+                  <path
+                    d="M120 15 L145 15 L145 150 L120 150 Z"
+                    fill="#0f172a"
+                  />
+                  <rect x="75" y="130" width="12" height="12" fill="#1d4ed8" />
+                  <rect x="90" y="130" width="12" height="12" fill="#1d4ed8" />
+                  <rect x="75" y="145" width="12" height="12" fill="#1d4ed8" />
+                  <rect x="90" y="145" width="12" height="12" fill="#1d4ed8" />
+                  <path
+                    d="M120 50 C165 50 185 70 185 90 C185 105 170 115 150 118 C175 122 190 135 190 155 C190 178 160 185 120 185 L120 150 C145 150 155 145 155 135 C155 125 140 120 120 120 L120 85 C140 85 150 80 150 72 C150 62 138 60 120 60 Z"
+                    fill="#f59e0b"
+                  />
+                  <path
+                    d="M25 160 L120 100 L120 120 L40 160 Z"
+                    fill="#fbbf24"
+                  />
+                  <path
+                    d="M15 125 C 20 180, 110 195, 150 180"
+                    stroke="#1d4ed8"
+                    stroke-width="6"
+                    stroke-linecap="round"
+                  />
+                  <path
+                    d="M80 195 C 140 195, 200 165, 195 100"
+                    stroke="#f59e0b"
+                    stroke-width="6"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h1
+                  class="text-2xl font-black text-navy-900 tracking-tight uppercase"
+                >
+                  ASSETTED BUILDERS LTD.
+                </h1>
+                <p class="text-xs font-bold text-gold-600 tracking-wider">
+                  REAL ESTATE DEVELOPMENT & HOLDINGS
+                </p>
+                <p class="text-[11px] text-slate-600 mt-1">
+                  Notun Panir pamp Road, Block# B, Sayednagar, Vatara, Gulshan,
+                  Dhaka-1212
+                </p>
+                <p class="text-[11px] text-slate-600">
+                  Cell: +8801706-664962, +8801717-080916
+                </p>
+              </div>
+            </div>
+            <div class="text-right">
+              <span
+                class="inline-block bg-navy-900 text-white font-bold text-xs px-3 py-1 rounded"
+                >PAYMENT STATEMENT</span
+              >
+              <p class="text-xs text-slate-500 mt-2">
+                Date:
+                <span id="printDocDate" class="font-bold text-slate-800"
+                  >--</span
+                >
+              </p>
+              <p class="text-xs text-slate-500">
+                Customer ID:
+                <span id="printDocRef" class="font-bold text-gold-600"
+                  >2026001</span
+                >
+              </p>
+            </div>
+          </div>
+
+          <!-- Customer Metadata Info Block -->
+          <div
+            class="bg-slate-50 p-4 rounded-xl border border-slate-200 grid grid-cols-2 gap-3 text-xs"
+          >
+            <div>
+              <span class="font-bold text-slate-500 uppercase"
+                >Customer ID:</span
+              >
+              <span id="printCustRef" class="font-bold text-gold-600"
+                >2026001</span
+              >
+            </div>
+            <div>
+              <span class="font-bold text-slate-500 uppercase"
+                >Customer Name:</span
+              >
+              <span id="printCustName" class="font-bold text-slate-900"
+                >--</span
+              >
+            </div>
+            <div>
+              <span class="font-bold text-slate-500 uppercase"
+                >Contact No:</span
+              >
+              <span id="printCustContact" class="font-medium text-slate-800"
+                >--</span
+              >
+            </div>
+            <div>
+              <span class="font-bold text-slate-500 uppercase"
+                >Project Name:</span
+              >
+              <span id="printCustProject" class="font-medium text-slate-800"
+                >--</span
+              >
+            </div>
+            <div>
+              <span class="font-bold text-slate-500 uppercase"
+                >Flat / Unit:</span
+              >
+              <span id="printCustFlat" class="font-medium text-slate-800"
+                >--</span
+              >
+            </div>
+            <div>
+              <span class="font-bold text-slate-500 uppercase"
+                >Total Flat Price:</span
+              >
+              <span id="printCustTotalPrice" class="font-bold text-navy-900"
+                >--</span
+              >
+            </div>
+            <div class="col-span-2">
+              <span class="font-bold text-slate-500 uppercase"
+                >Agreement Date:</span
+              >
+              <span
+                id="printCustAgreementDate"
+                class="font-medium text-slate-800"
+                >--</span
+              >
+            </div>
+          </div>
+
+          <!-- Statement Ledger Table -->
+          <div>
+            <h3
+              class="text-xs font-bold text-slate-500 uppercase mb-2 tracking-wider"
+            >
+              Payment Transaction History
+            </h3>
+            <table
+              class="w-full text-xs text-left border-collapse border border-slate-200"
+            >
+              <thead class="bg-navy-900 text-white font-bold">
+                <tr>
+                  <th
+                    class="py-2 px-3 border border-slate-300 text-center w-10"
+                  >
+                    SL
+                  </th>
+                  <th class="py-2 px-3 border border-slate-300">Date</th>
+                  <th class="py-2 px-3 border border-slate-300">
+                    Money Receipt No.
+                  </th>
+                  <th class="py-2 px-3 border border-slate-300">Type</th>
+                  <th class="py-2 px-3 border border-slate-300">
+                    Cheque / Ref No
+                  </th>
+                  <th class="py-2 px-3 border border-slate-300 text-right">
+                    Amount (BDT)
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="printTableBody">
+                <!-- Populated dynamically -->
+              </tbody>
+              <tfoot class="font-bold text-slate-900">
+                <tr class="bg-slate-100">
+                  <td
+                    colspan="5"
+                    class="py-2 px-3 border border-slate-300 text-right uppercase"
+                  >
+                    Total Amount Received:
+                  </td>
+                  <td
+                    id="printTotalPaid"
+                    class="py-2 px-3 border border-slate-300 text-right text-emerald-700 font-extrabold"
+                  >
+                    0 BDT
+                  </td>
+                </tr>
+                <tr class="bg-amber-50">
+                  <td
+                    colspan="5"
+                    class="py-2 px-3 border border-slate-300 text-right uppercase text-amber-800"
+                  >
+                    Net Outstanding Balance:
+                  </td>
+                  <td
+                    id="printBalanceDue"
+                    class="py-2 px-3 border border-slate-300 text-right text-amber-700 font-extrabold"
+                  >
+                    0 BDT
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <!-- Signatures -->
+          <div
+            class="pt-12 flex justify-between items-center text-center text-xs text-slate-700"
+          >
+            <div class="w-48 border-t border-slate-400 pt-1 font-semibold">
+              Customer Signature
+            </div>
+            <div class="w-56 border-t border-slate-400 pt-1 font-semibold">
+              Authorized Signature<br />
+              <span class="text-[10px] text-slate-500"
+                >Assetted Builders Ltd.</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL FOR ADDING / EDITING PAYMENT ENTRY -->
+    <div
+      id="paymentModal"
+      class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden"
+    >
+      <div
+        class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden transform transition-all"
+      >
+        <div
+          class="bg-navy-900 text-white px-5 py-4 flex justify-between items-center"
+        >
+          <h3 id="paymentModalTitle" class="font-bold text-sm">
+            Add Payment Installment
+          </h3>
+          <button
+            onclick="closePaymentModal()"
+            class="text-slate-400 hover:text-white"
+          >
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <form
+          id="paymentForm"
+          onsubmit="handlePaymentSubmit(event)"
+          class="p-5 space-y-4 text-sm"
+        >
+          <input type="hidden" id="modalPaymentId" />
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1"
+              >Payment Date</label
+            >
+            <input
+              type="date"
+              id="modalPayDate"
+              required
+              class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-gold-500 focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1"
+              >Money Receipt No. (M.R. No.)</label
+            >
+            <input
+              type="text"
+              id="modalPayMrNo"
+              placeholder="e.g. MR-2026-001"
+              class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 font-mono text-slate-800 focus:ring-2 focus:ring-gold-500 focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1"
+              >Payment Method</label
+            >
+            <select
+              id="modalPayType"
+              class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-gold-500 focus:outline-none"
+            >
+              <option value="Cash">Cash</option>
+              <option value="Cheque">Cheque</option>
+              <option value="Online Transfer">Online Transfer</option>
+              <option value="Pay Order">Pay Order</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1"
+              >Cheque / Reference / Transaction No.</label
+            >
+            <input
+              type="text"
+              id="modalPayCheque"
+              placeholder="e.g. CQ-881230 or N/A"
+              class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-gold-500 focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1"
+              >Amount (BDT)</label
+            >
+            <input
+              type="number"
+              id="modalPayAmount"
+              required
+              min="1"
+              placeholder="e.g. 500000"
+              class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 font-bold text-emerald-600 focus:ring-2 focus:ring-gold-500 focus:outline-none"
+            />
+          </div>
+
+          <div class="pt-3 flex justify-end space-x-2">
+            <button
+              type="button"
+              onclick="closePaymentModal()"
+              class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-xs"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs shadow"
+            >
+              Save Entry
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer
+      class="no-print bg-slate-900 text-slate-400 py-4 text-center text-xs border-t border-slate-800"
+    >
+      <p>
+        © 2026 Assetted Builders Ltd. All rights reserved. | Office: Notun Panir
+        pamp Road, Block# B, Sayednagar, Vatara, Gulshan, Dhaka-1212
+      </p>
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+      // Sample Default Data Structure with Customer ID 2026001 and Money Receipt Numbers
+      const DEFAULT_CUSTOMERS = [
+        {
+          id: "cust_2026001",
+          refNo: "2026001",
+          name: "Hosneara Begum",
+          contact: "01894-934665",
+          project: "Assetted Master Tower",
+          flat: "Lift - 3A",
+          totalPrice: 6450000,
+          agreementDate: "2023-01-15",
+          payments: [
+            {
+              id: "pay_1",
+              date: "2023-01-15",
+              mrNo: "MR-2026-001",
+              type: "Cheque",
+              chequeNo: "CQ-881230",
+              amount: 1000000,
+            },
+            {
+              id: "pay_2",
+              date: "2023-05-10",
+              mrNo: "MR-2026-002",
+              type: "Cash",
+              chequeNo: "",
+              amount: 500000,
+            },
+            {
+              id: "pay_3",
+              date: "2023-09-20",
+              mrNo: "MR-2026-003",
+              type: "Online Transfer",
+              chequeNo: "TRF-9901",
+              amount: 500000,
+            },
+            {
+              id: "pay_4",
+              date: "2024-02-14",
+              mrNo: "MR-2026-004",
+              type: "Cheque",
+              chequeNo: "CQ-104928",
+              amount: 500000,
+            },
+            {
+              id: "pay_5",
+              date: "2024-08-01",
+              mrNo: "MR-2026-005",
+              type: "Cash",
+              chequeNo: "",
+              amount: 500000,
+            },
+            {
+              id: "pay_6",
+              date: "2025-01-10",
+              mrNo: "MR-2026-006",
+              type: "Cheque",
+              chequeNo: "CQ-334102",
+              amount: 500000,
+            },
+          ],
+        },
+      ];
+
+      let customers = [];
+      let currentCustomerId = "";
+
+      window.onload = function () {
+        loadDatabase();
+        renderCustomerDropdown();
+        if (customers.length > 0) {
+          switchCustomer(customers[0].id);
+        }
+      };
+
+      function loadDatabase() {
+        const stored = localStorage.getItem("assetted_builders_customers");
+        if (stored) {
+          try {
+            customers = JSON.parse(stored);
+            customers.forEach((c, idx) => {
+              if (!c.refNo) {
+                c.refNo = String(2026001 + idx);
+              }
+            });
+          } catch (e) {
+            customers = DEFAULT_CUSTOMERS;
+          }
+        } else {
+          customers = DEFAULT_CUSTOMERS;
+          saveToLocalStorage();
+        }
+      }
+
+      function saveToLocalStorage() {
+        localStorage.setItem(
+          "assetted_builders_customers",
+          JSON.stringify(customers),
+        );
+      }
+
+      function generateNextRefNo() {
+        let maxRef = 2026000;
+        customers.forEach((c) => {
+          const num = parseInt(c.refNo, 10);
+          if (!isNaN(num) && num > maxRef) {
+            maxRef = num;
+          }
+        });
+        return String(maxRef + 1);
+      }
+
+      function getCurrentCustomer() {
+        return (
+          customers.find((c) => c.id === currentCustomerId) || customers[0]
+        );
+      }
+
+      function renderCustomerDropdown(filteredList = null) {
+        const dropdown = document.getElementById("customerSelect");
+        dropdown.innerHTML = "";
+        const listToRender = filteredList || customers;
+
+        if (listToRender.length === 0) {
+          const opt = document.createElement("option");
+          opt.textContent = "No matching customers found";
+          dropdown.appendChild(opt);
+          return;
+        }
+
+        listToRender.forEach((c) => {
+          const opt = document.createElement("option");
+          opt.value = c.id;
+          opt.textContent = `Customer ID: ${c.refNo || "2026001"} | ${c.name} (${c.flat || "N/A"})`;
+          dropdown.appendChild(opt);
+        });
+      }
+
+      function filterCustomers() {
+        const query = document
+          .getElementById("searchInput")
+          .value.toLowerCase()
+          .trim();
+        if (!query) {
+          renderCustomerDropdown();
+          if (currentCustomerId) {
+            document.getElementById("customerSelect").value = currentCustomerId;
+          }
+          return;
+        }
+
+        const filtered = customers.filter(
+          (c) =>
+            (c.name && c.name.toLowerCase().includes(query)) ||
+            (c.flat && c.flat.toLowerCase().includes(query)) ||
+            (c.refNo && c.refNo.toLowerCase().includes(query)) ||
+            (c.project && c.project.toLowerCase().includes(query)),
+        );
+
+        renderCustomerDropdown(filtered);
+        if (filtered.length > 0) {
+          switchCustomer(filtered[0].id);
+        }
+      }
+
+      function switchCustomer(id) {
+        currentCustomerId = id;
+        document.getElementById("customerSelect").value = id;
+        populateCustomerForm();
+        renderPaymentTable();
+        updateCalculations();
+      }
+
+      function populateCustomerForm() {
+        const cust = getCurrentCustomer();
+        if (!cust) return;
+        document.getElementById("custRef").value = cust.refNo || "2026001";
+        document.getElementById("custName").value = cust.name || "";
+        document.getElementById("custContact").value = cust.contact || "";
+        document.getElementById("custProject").value = cust.project || "";
+        document.getElementById("custFlat").value = cust.flat || "";
+        document.getElementById("custTotalPrice").value = cust.totalPrice || 0;
+        document.getElementById("custAgreementDate").value =
+          cust.agreementDate || "";
+        document.getElementById("activeCustomerIdBadge").textContent =
+          cust.refNo || "2026001";
+      }
+
+      function saveCustomerInfo() {
+        const cust = getCurrentCustomer();
+        if (!cust) return;
+
+        cust.refNo =
+          document.getElementById("custRef").value.trim() || "2026001";
+        cust.name =
+          document.getElementById("custName").value || "Unnamed Client";
+        cust.contact = document.getElementById("custContact").value || "";
+        cust.project = document.getElementById("custProject").value || "";
+        cust.flat = document.getElementById("custFlat").value || "";
+        cust.totalPrice =
+          parseFloat(document.getElementById("custTotalPrice").value) || 0;
+        cust.agreementDate =
+          document.getElementById("custAgreementDate").value || "";
+
+        saveToLocalStorage();
+        renderCustomerDropdown();
+        document.getElementById("customerSelect").value = cust.id;
+        document.getElementById("activeCustomerIdBadge").textContent =
+          cust.refNo;
+        updateCalculations();
+        showToast("Customer profile updated!");
+      }
+
+      function createNewCustomerPrompt() {
+        const nextRef = generateNextRefNo();
+        const name = prompt("Enter New Customer Name:", "New Customer");
+        if (!name) return;
+
+        const newCust = {
+          id: "cust_" + Date.now(),
+          refNo: nextRef,
+          name: name,
+          contact: "",
+          project: "Assetted Master Tower",
+          flat: "",
+          totalPrice: 0,
+          agreementDate: new Date().toISOString().split("T")[0],
+          payments: [],
+        };
+
+        customers.push(newCust);
+        saveToLocalStorage();
+        renderCustomerDropdown();
+        switchCustomer(newCust.id);
+        showToast(`New client created with Customer ID: ${nextRef}`);
+      }
+
+      function renderPaymentTable() {
+        const cust = getCurrentCustomer();
+        const tbody = document.getElementById("paymentTableBody");
+        tbody.innerHTML = "";
+
+        if (!cust || !cust.payments || cust.payments.length === 0) {
+          tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="py-8 text-center text-slate-400 font-medium italic">
+                            No payment history recorded yet for this customer.
+                        </td>
+                    </tr>
+                `;
+          return;
+        }
+
+        cust.payments.forEach((p, index) => {
+          const tr = document.createElement("tr");
+          tr.className = "hover:bg-slate-50 transition-colors";
+          tr.innerHTML = `
+                    <td class="py-3 px-4 text-center font-semibold text-slate-400">${index + 1}</td>
+                    <td class="py-3 px-4 font-medium">${formatDisplayDate(p.date)}</td>
+                    <td class="py-3 px-4 font-mono text-xs font-semibold text-amber-700">${p.mrNo || "-"}</td>
+                    <td class="py-3 px-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-800">
+                            ${p.type}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 font-mono text-xs text-slate-600">${p.chequeNo || "-"}</td>
+                    <td class="py-3 px-4 text-right font-bold text-slate-900">${(parseFloat(p.amount) || 0).toLocaleString("en-IN")} BDT</td>
+                    <td class="py-3 px-4 text-center space-x-1">
+                        <button onclick="editPaymentEntry('${p.id}')" class="p-1.5 text-slate-500 hover:text-blue-600 transition-colors" title="Edit">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="deletePaymentEntry('${p.id}')" class="p-1.5 text-slate-500 hover:text-red-600 transition-colors" title="Delete">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      function updateCalculations() {
+        const cust = getCurrentCustomer();
+        if (!cust) return;
+
+        const totalPrice = parseFloat(cust.totalPrice) || 0;
+        const totalPaid = cust.payments
+          ? cust.payments.reduce(
+              (sum, p) => sum + (parseFloat(p.amount) || 0),
+              0,
+            )
+          : 0;
+        const balance = totalPrice - totalPaid;
+        const progress =
+          totalPrice > 0
+            ? Math.min(Math.round((totalPaid / totalPrice) * 100), 100)
+            : 0;
+
+        document.getElementById("cardTotalPrice").textContent =
+          totalPrice.toLocaleString("en-IN") + " BDT";
+        document.getElementById("cardProjectName").textContent =
+          "Project: " + (cust.project || "N/A");
+
+        document.getElementById("cardTotalPaid").textContent =
+          totalPaid.toLocaleString("en-IN") + " BDT";
+        document.getElementById("cardPaymentCount").textContent =
+          (cust.payments ? cust.payments.length : 0) + " Installments Recorded";
+
+        document.getElementById("cardBalanceDue").textContent =
+          balance.toLocaleString("en-IN") + " BDT";
+        document.getElementById("cardProgressText").textContent =
+          progress + "% Paid";
+
+        document.getElementById("progressPercentageText").textContent =
+          progress + "%";
+        document.getElementById("progressBarInner").style.width =
+          progress + "%";
+
+        document.getElementById("tableTotalPaid").textContent =
+          totalPaid.toLocaleString("en-IN") + " BDT";
+        document.getElementById("tableBalanceDue").textContent =
+          balance.toLocaleString("en-IN") + " BDT";
+      }
+
+      function openPaymentModal(paymentId = null) {
+        document.getElementById("paymentForm").reset();
+        document.getElementById("modalPaymentId").value = "";
+        document.getElementById("modalPayDate").value = new Date()
+          .toISOString()
+          .split("T")[0];
+
+        if (paymentId) {
+          const cust = getCurrentCustomer();
+          const pay = cust.payments.find((p) => p.id === paymentId);
+          if (pay) {
+            document.getElementById("paymentModalTitle").textContent =
+              "Edit Payment Installment";
+            document.getElementById("modalPaymentId").value = pay.id;
+            document.getElementById("modalPayDate").value = pay.date;
+            document.getElementById("modalPayMrNo").value = pay.mrNo || "";
+            document.getElementById("modalPayType").value = pay.type;
+            document.getElementById("modalPayCheque").value =
+              pay.chequeNo || "";
+            document.getElementById("modalPayAmount").value = pay.amount;
+          }
+        } else {
+          document.getElementById("paymentModalTitle").textContent =
+            "Add Payment Installment";
+          const cust = getCurrentCustomer();
+          if (cust && cust.payments && cust.payments.length > 0) {
+            document.getElementById("modalPayMrNo").value =
+              `MR-2026-00${cust.payments.length + 1}`;
+          } else {
+            document.getElementById("modalPayMrNo").value = "MR-2026-001";
+          }
+        }
+
+        document.getElementById("paymentModal").classList.remove("hidden");
+      }
+
+      function closePaymentModal() {
+        document.getElementById("paymentModal").classList.add("hidden");
+      }
+
+      function handlePaymentSubmit(e) {
+        e.preventDefault();
+        const cust = getCurrentCustomer();
+        if (!cust) return;
+
+        const id = document.getElementById("modalPaymentId").value;
+        const date = document.getElementById("modalPayDate").value;
+        const mrNo = document.getElementById("modalPayMrNo").value.trim();
+        const type = document.getElementById("modalPayType").value;
+        const chequeNo = document.getElementById("modalPayCheque").value.trim();
+        const amount =
+          parseFloat(document.getElementById("modalPayAmount").value) || 0;
+
+        if (id) {
+          const pay = cust.payments.find((p) => p.id === id);
+          if (pay) {
+            pay.date = date;
+            pay.mrNo = mrNo;
+            pay.type = type;
+            pay.chequeNo = chequeNo;
+            pay.amount = amount;
+          }
+        } else {
+          cust.payments.push({
+            id: "pay_" + Date.now(),
+            date: date,
+            mrNo: mrNo,
+            type: type,
+            chequeNo: chequeNo,
+            amount: amount,
+          });
+        }
+
+        saveToLocalStorage();
+        renderPaymentTable();
+        updateCalculations();
+        closePaymentModal();
+        showToast("Payment entry recorded successfully!");
+      }
+
+      function editPaymentEntry(id) {
+        openPaymentModal(id);
+      }
+
+      function deletePaymentEntry(id) {
+        if (!confirm("Are you sure you want to delete this payment record?"))
+          return;
+        const cust = getCurrentCustomer();
+        cust.payments = cust.payments.filter((p) => p.id !== id);
+        saveToLocalStorage();
+        renderPaymentTable();
+        updateCalculations();
+        showToast("Payment record deleted!");
+      }
+
+      // ==========================================
+      // EXPORT ENGINE 1: EXPORT TO EXCEL (.XLSX)
+      // ==========================================
+      function exportToExcel() {
+        const cust = getCurrentCustomer();
+        if (!cust) return;
+
+        const totalPrice = parseFloat(cust.totalPrice) || 0;
+        const totalPaid = cust.payments.reduce(
+          (sum, p) => sum + (parseFloat(p.amount) || 0),
+          0,
+        );
+        const balance = totalPrice - totalPaid;
+
+        const excelData = [
+          ["ASSETTED BUILDERS LTD."],
+          [
+            "OFFICE ADDRESS: Notun Panir pamp Road, Block# B, Sayednagar, Vatara, Gulshan, Dhaka-1212",
+          ],
+          ["CELL: +8801706-664962, +8801717-080916"],
+          ["CUSTOMER PAYMENT STATEMENT & LEDGER"],
+          ["Customer ID:", cust.refNo || "2026001"],
+          ["Generated Date:", new Date().toLocaleDateString("en-GB")],
+          [""],
+          ["CUSTOMER DETAILS"],
+          ["Customer ID:", cust.refNo || "2026001"],
+          ["Customer Name:", cust.name],
+          ["Contact Number:", cust.contact],
+          ["Project Name:", cust.project],
+          ["Flat / Unit No:", cust.flat],
+          ["Total Flat Price:", totalPrice + " BDT"],
+          ["Agreement Date:", cust.agreementDate],
+          [""],
+          ["PAYMENT HISTORY LEDGER"],
+          [
+            "SL No",
+            "Date",
+            "Money Receipt No.",
+            "Payment Type",
+            "Cheque / Ref No",
+            "Amount (BDT)",
+          ],
+        ];
+
+        cust.payments.forEach((p, idx) => {
+          excelData.push([
+            idx + 1,
+            p.date,
+            p.mrNo || "-",
+            p.type,
+            p.chequeNo || "-",
+            parseFloat(p.amount) || 0,
+          ]);
+        });
+
+        excelData.push([""]);
+        excelData.push(["SUMMARY"]);
+        excelData.push(["Total Flat Price:", totalPrice]);
+        excelData.push(["Total Received Payment:", totalPaid]);
+        excelData.push(["Net Outstanding Balance:", balance]);
+
+        const ws = XLSX.utils.aoa_to_sheet(excelData);
+        ws["!cols"] = [
+          { wch: 8 },
+          { wch: 14 },
+          { wch: 20 },
+          { wch: 18 },
+          { wch: 22 },
+          { wch: 20 },
+        ];
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Payment Statement");
+
+        const fileName = `Assetted_Statement_ID_${cust.refNo || "2026001"}_${cust.name.replace(/\s+/g, "_")}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+        showToast("Excel (.xlsx) statement downloaded!");
+      }
+
+      // ==========================================
+      // EXPORT ENGINE 2: EXPORT TO WORD (.DOCX)
+      // ==========================================
+      function exportToWord() {
+        const cust = getCurrentCustomer();
+        if (!cust) return;
+
+        const totalPrice = parseFloat(cust.totalPrice) || 0;
+        const totalPaid = cust.payments.reduce(
+          (sum, p) => sum + (parseFloat(p.amount) || 0),
+          0,
+        );
+        const balance = totalPrice - totalPaid;
+
+        let rowsHtml = "";
+        cust.payments.forEach((p, idx) => {
+          rowsHtml += `
+                    <tr>
+                        <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">${idx + 1}</td>
+                        <td style="border: 1px solid #cbd5e1; padding: 8px;">${p.date}</td>
+                        <td style="border: 1px solid #cbd5e1; padding: 8px; font-family: monospace;">${p.mrNo || "-"}</td>
+                        <td style="border: 1px solid #cbd5e1; padding: 8px;">${p.type}</td>
+                        <td style="border: 1px solid #cbd5e1; padding: 8px;">${p.chequeNo || "-"}</td>
+                        <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: right; font-weight: bold;">${(parseFloat(p.amount) || 0).toLocaleString("en-IN")} BDT</td>
+                    </tr>
+                `;
+        });
+
+        const docHtml = `
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                <head><title>Customer Statement</title>
+                <style>
+                    body { font-family: 'Calibri', 'Arial', sans-serif; color: #0f172a; margin: 30px; }
+                    h1 { color: #0f172a; margin-bottom: 2px; text-transform: uppercase; }
+                    .header { border-bottom: 2px solid #d97706; padding-bottom: 10px; margin-bottom: 20px; }
+                    .info-table, .ledger-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; }
+                    .info-table td { padding: 6px; }
+                    .ledger-table th { background-color: #0f172a; color: #ffffff; padding: 8px; border: 1px solid #0f172a; }
+                    .summary-row { font-weight: bold; background-color: #f1f5f9; }
+                </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>ASSETTED BUILDERS LTD.</h1>
+                        <p style="color: #d97706; font-weight: bold; font-size: 12px; margin: 0;">REAL ESTATE DEVELOPMENT & HOLDINGS</p>
+                        <p style="font-size: 11px; color: #334155; margin-top: 4px; margin-bottom: 2px;"><strong>Office Address:</strong> Notun Panir pamp Road, Block# B, Sayednagar, Vatara, Gulshan, Dhaka-1212</p>
+                        <p style="font-size: 11px; color: #334155; margin: 0;"><strong>Cell:</strong> +8801706-664962, +8801717-080916</p>
+                        <p style="font-size: 11px; color: #64748b; margin-top: 6px;">Corporate Customer Payment Statement | Customer ID: <strong>${cust.refNo || "2026001"}</strong> | Date: ${new Date().toLocaleDateString("en-GB")}</p>
+                    </div>
+
+                    <h3>Customer & Unit Information</h3>
+                    <table class="info-table" style="background-color: #f8fafc; border: 1px solid #e2e8f0;">
+                        <tr>
+                            <td><strong>Customer ID:</strong> ${cust.refNo || "2026001"}</td>
+                            <td><strong>Customer Name:</strong> ${cust.name}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Contact No:</strong> ${cust.contact}</td>
+                            <td><strong>Project Name:</strong> ${cust.project}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Flat / Unit No:</strong> ${cust.flat}</td>
+                            <td><strong>Agreed Flat Price:</strong> ${totalPrice.toLocaleString("en-IN")} BDT</td>
+                        </tr>
+                        <tr>
+                            <td colspan="2"><strong>Agreement Date:</strong> ${cust.agreementDate}</td>
+                        </tr>
+                    </table>
+
+                    <h3>Payment Installment History</h3>
+                    <table class="ledger-table">
+                        <thead>
+                            <tr>
+                                <th>SL</th>
+                                <th>Date</th>
+                                <th>Money Receipt No.</th>
+                                <th>Type</th>
+                                <th>Cheque / Ref No</th>
+                                <th style="text-align: right;">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                        <tfoot>
+                            <tr class="summary-row">
+                                <td colspan="5" style="border: 1px solid #cbd5e1; padding: 8px; text-align: right;">TOTAL RECEIVED AMOUNT:</td>
+                                <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: right; color: #047857;">${totalPaid.toLocaleString("en-IN")} BDT</td>
+                            </tr>
+                            <tr class="summary-row" style="background-color: #fef3c7;">
+                                <td colspan="5" style="border: 1px solid #cbd5e1; padding: 8px; text-align: right;">NET OUTSTANDING BALANCE:</td>
+                                <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: right; color: #b45309;">${balance.toLocaleString("en-IN")} BDT</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <br/><br/>
+                    <table style="width: 100%; text-align: center; font-size: 12px; margin-top: 40px;">
+                        <tr>
+                            <td style="width: 50%;">
+                                _______________________<br/>
+                                <strong>Customer Signature</strong>
+                            </td>
+                            <td style="width: 50%;">
+                                _______________________<br/>
+                                <strong>Authorized Signature</strong><br/>
+                                Assetted Builders Ltd.
+                            </td>
+                        </tr>
+                    </table>
+                </body>
+                </html>
+            `;
+
+        const blob = new Blob(["\ufeff", docHtml], {
+          type: "application/msword",
+        });
+
+        const fileName = `Assetted_Statement_ID_${cust.refNo || "2026001"}_${cust.name.replace(/\s+/g, "_")}.doc`;
+        saveAs(blob, fileName);
+        showToast("Word Document (.doc) generated!");
+      }
+
+      // ==========================================
+      // EXPORT ENGINE 3: PRINTABLE / PDF PREVIEW
+      // ==========================================
+      function openPrintModal() {
+        const cust = getCurrentCustomer();
+        if (!cust) return;
+
+        const totalPrice = parseFloat(cust.totalPrice) || 0;
+        const totalPaid = cust.payments.reduce(
+          (sum, p) => sum + (parseFloat(p.amount) || 0),
+          0,
+        );
+        const balance = totalPrice - totalPaid;
+
+        document.getElementById("printDocDate").textContent =
+          new Date().toLocaleDateString("en-GB");
+        document.getElementById("printDocRef").textContent =
+          cust.refNo || "2026001";
+        document.getElementById("printCustRef").textContent =
+          cust.refNo || "2026001";
+
+        document.getElementById("printCustName").textContent = cust.name || "-";
+        document.getElementById("printCustContact").textContent =
+          cust.contact || "-";
+        document.getElementById("printCustProject").textContent =
+          cust.project || "-";
+        document.getElementById("printCustFlat").textContent = cust.flat || "-";
+        document.getElementById("printCustTotalPrice").textContent =
+          totalPrice.toLocaleString("en-IN") + " BDT";
+        document.getElementById("printCustAgreementDate").textContent =
+          formatDisplayDate(cust.agreementDate);
+
+        const tbody = document.getElementById("printTableBody");
+        tbody.innerHTML = "";
+
+        cust.payments.forEach((p, idx) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+                    <td class="py-2 px-3 border border-slate-200 text-center">${idx + 1}</td>
+                    <td class="py-2 px-3 border border-slate-200">${formatDisplayDate(p.date)}</td>
+                    <td class="py-2 px-3 border border-slate-200 font-mono font-semibold text-amber-800">${p.mrNo || "-"}</td>
+                    <td class="py-2 px-3 border border-slate-200">${p.type}</td>
+                    <td class="py-2 px-3 border border-slate-200">${p.chequeNo || "-"}</td>
+                    <td class="py-2 px-3 border border-slate-200 text-right font-bold">${(parseFloat(p.amount) || 0).toLocaleString("en-IN")} BDT</td>
+                `;
+          tbody.appendChild(tr);
+        });
+
+        document.getElementById("printTotalPaid").textContent =
+          totalPaid.toLocaleString("en-IN") + " BDT";
+        document.getElementById("printBalanceDue").textContent =
+          balance.toLocaleString("en-IN") + " BDT";
+
+        document.getElementById("printModal").classList.remove("hidden");
+      }
+
+      function closePrintModal() {
+        document.getElementById("printModal").classList.add("hidden");
+      }
+
+      function printStatementDoc() {
+        window.print();
+      }
+
+      function formatDisplayDate(dateStr) {
+        if (!dateStr) return "-";
+        const parts = dateStr.split("-");
+        if (parts.length === 3) {
+          return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        return dateStr;
+      }
+
+      function showToast(msg) {
+        const toast = document.getElementById("toast");
+        document.getElementById("toast-msg").textContent = msg;
+        toast.style.transform = "translateY(0)";
+        setTimeout(() => {
+          toast.style.transform = "translateY(-150%)";
+        }, 3000);
+      }
+    </script>
+  </body>
+</html>

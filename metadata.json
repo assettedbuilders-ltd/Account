@@ -1,0 +1,6 @@
+{
+  "name": "Assetted Builders Ltd. - ERP & Accounting Suite",
+  "description": "Comprehensive real estate project management, customer ledger, bill voucher generator, and multi-project construction accounting system for Assetted Builders Ltd.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
